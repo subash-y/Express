@@ -24,14 +24,59 @@ const products = [
     {id:6,product_name:"supernova"}
 ]
 
+app.get("/",(req,res)=>{
+    res.send({msg:"root"});
+})
 
+//MiddleWare for finding whether given id by user  is present in the users array[index] or not.
+const getIndexById =(req,res,next) =>{
+    const id = parseInt(req.params.id);
+    if(isNaN(id)){
+         return res.status(400).send({msg:"Bad request id"});
+    } 
+    const userIndex = users.findIndex((user) => user.id === id);
+    console.log(userIndex);
+    if (userIndex === -1){
+        return res.status(400).send({msg:"Bad request id"});
+    }
+    req.userIndex = userIndex;
+    next();
+}
 
+const getParamsId = (req,res,next) =>{
+    const id =parseInt(req.params.id);
+    if(isNaN(id)){
+        return res.status(400).send({msg:"Bad request id"}); //return is for to return once if statement gets executed then below are not going to be execute.
+    }
+    req.id = id;
+    next();
+}
+//Products
 
-app.get("/api/users",(req,res) =>{
-    console.log(req.query);
+app.get("/api/products",(req,res) =>{
+    
     
     const {query:{filter, value}} = req;  //object destructing.
-    console.log(filter,value);
+    if(filter && value){
+    return res.send(products.filter((product) => product[filter].toLowerCase().includes(value).toLowerCase())); //tolowercase is used because always the url parameters in smallcase.
+    }
+    return res.send(products);
+
+})
+
+app.get("/api/products/:id",getParamsId,(req,res) =>{
+    const id = req.id;
+    const product = products.find((product) => product.id === id)
+    if(product){
+        return res.send(product);
+    }
+    return res.status(404).send({msg:"User not found!"});
+});
+
+app.get("/api/users",(req,res) =>{
+    
+    
+    const {query:{filter, value}} = req;  //object destructing.
     if(filter && value){
     return res.send(users.filter((user) => user[filter].toLowerCase().includes(value).toLowerCase())); //tolowercase is used because always the url parameters in smallcase.
     }
@@ -39,15 +84,8 @@ app.get("/api/users",(req,res) =>{
 
 })
 
-
-app.get("/api/users/:id",(req,res) =>{
-    
-    const id =parseInt(req.params.id);
-    //console.log(req.params);
-    if(isNaN(id)){
-        return res.status(400).send({msg:"Bad request id"}); //return is for to return once if statement gets executed then below are not going to be execute.
-    }
-
+app.get("/api/users/:id",getParamsId,(req,res) =>{
+    const id = req.id;
     const user = users.find((user) => user.id === id)
     if(user){
         return res.send(user);
@@ -55,9 +93,7 @@ app.get("/api/users/:id",(req,res) =>{
     return res.status(404).send({msg:"User not found!"});
 });
 
-app.get("/",(req,res)=>{
-    res.send({msg:"root"});
-})
+
 
 
 //POST req ->Creation
@@ -74,15 +110,8 @@ app.post("/api/users",(req,res)=>{
 
 //PUT req -> UPDATE, Complete updation
 
-app.put("/api/users/:id",(req,res) =>{
-    const id = parseInt(req.params.id);
-    if(isNaN(id)){
-         return res.status(400).send({msg:"Bad request id"});
-    } 
-    const userIndex = users.findIndex((user) => user.id === id);
-    if (userIndex === -1){
-        return res.status(400).send({msg:"Bad request id"});
-    }
+app.put("/api/users/:id",getIndexById,(req,res) =>{  //getIndexById act as a middleware.
+    const userIndex = req.userIndex; 
     const {body} = req;
     users[userIndex] = {id: id , ...body};
     return res.status(200).send({msg:"User updated successfully"});
@@ -90,17 +119,9 @@ app.put("/api/users/:id",(req,res) =>{
 
 //PATCH -> Partial req,Updating the particular field.
 
-app.patch("/api/users/:id",(req,res)=>{
+app.patch("/api/users/:id",getIndexById,(req,res)=>{
 
-    const id = parseInt(req.params.id);
-    if(isNaN(id)){
-         return res.status(400).send({msg:"Bad request id"});
-    } 
-    const userIndex = users.findIndex((user) => user.id === id);
-    console.log(userIndex);
-    if (userIndex === -1){
-        return res.status(400).send({msg:"Bad request id"});
-    }
+    const userIndex = req.userIndex
     const {body} = req;
     users[userIndex] ={...users[userIndex], ...body}; 
     //Body will replace if there is already existing key-value pair,if its missing the add newly.Order is important
@@ -110,16 +131,8 @@ app.patch("/api/users/:id",(req,res)=>{
     return res.sendStatus(200);
 })
 
-app.delete("/api/users/:id",(req,res) =>{
-     const id = parseInt(req.params.id);
-    if(isNaN(id)){
-         return res.status(400).send({msg:"Bad request id"});
-    } 
-    const userIndex = users.findIndex((user) => user.id === id);
-    console.log(userIndex);
-    if (userIndex === -1){
-        return res.status(400).send({msg:"Bad request id"});
-    }
+app.delete("/api/users/:id",getIndexById,(req,res) =>{ 
+    const userIndex = req.userIndex
     users.splice(userIndex,1);
     res.sendStatus(200);
 })
