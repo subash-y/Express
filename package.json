@@ -4,7 +4,7 @@
   "main": "index.mjs",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "Start-dev":"nodemon ./src/index.mjs",
+    "Start-dev": "nodemon ./src/index.mjs",
     "start": "node ./src/mjs"
   },
   "keywords": [],
@@ -13,6 +13,7 @@
   "type": "module",
   "description": "",
   "dependencies": {
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "express-validator": "^7.3.1"
   }
 }

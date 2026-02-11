@@ -1,4 +1,6 @@
 import express from "express";
+import {creatUserValidationSchema} from "./utils/validationSchemas.mjs"
+import {validationResult,matchedData,checkSchema} from "express-validator"
 
 const app = express();
 
@@ -94,13 +96,19 @@ app.get("/api/users/:id",getParamsId,(req,res) =>{
 });
 
 
-
-
 //POST req ->Creation
 app.use(express.json()); //use() is used as middleware
-app.post("/api/users",(req,res)=>{
-    console.log(req.body);
-    const {body} = req;
+
+app.post("/api/users",checkSchema(creatUserValidationSchema),(req,res)=>{
+
+    const result = validationResult(req);
+    // console.log(result);
+    // console.log(req['express-validator']);
+    if(!result.isEmpty()){
+        return res.status(400).send({error:result.array()})
+    }
+    
+    const body = matchedData(req);
     const newUser = {id: users[users.length-1].id+1, 
     ...body}
     users.push(newUser);
