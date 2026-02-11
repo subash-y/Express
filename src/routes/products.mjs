@@ -15,7 +15,8 @@ const products = [
 
 router.get("/api/products",(req,res) =>{
     
-    
+    req.session.visited = true; //Initialized Session
+    console.log(req.sessionID);
     const {query:{filter, value}} = req;  //object destructing.
     if(filter && value){
     return res.send(products.filter((product) => product[filter].toLowerCase().includes(value).toLowerCase())); //tolowercase is used because always the url parameters in smallcase.
