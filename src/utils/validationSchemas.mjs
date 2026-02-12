@@ -12,13 +12,10 @@ export const creatUserValidationSchema = {
             errorMessage:"Username must be string."
         }
     },    
-    age:{
+    password:{
         notEmpty:{
-            errorMessage:"Age must not be empty"
+            errorMessage:"Password must not be empty."
         },
-        isInt:{
-            options:{min:1,max:100},
-            errorMessage:"Age must be a number between 1 to 100."
+        
         }
-    }
 }

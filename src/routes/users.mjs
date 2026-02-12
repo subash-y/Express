@@ -3,25 +3,38 @@ import { getIndexById, getParamsId } from "../utils/middleWare.mjs"
 import { creatUserValidationSchema } from "../utils/validationSchemas.mjs"
 import { validationResult, matchedData, checkSchema } from "express-validator"
 import {users} from "../utils/constants.mjs"
+import { User } from "../mongoose/schema/users.mjs";
 
 const router = Router();
 
-router.get("/api/users", (req, res) => {
-
+router.get("/api/users", async (req, res) => {
     console.log(req.signedCookies);
+
     if (req.signedCookies.user && req.signedCookies.user === "helloworld") {
-        const { query: { filter, value } } = req;  //object destructing.
-        if (filter && value) {
-            return res.send(users.filter((user) => user[filter].toLowerCase().includes(value).toLowerCase())); //tolowercase is used because always the url parameters in smallcase.
+        try {
+            const { query: { filter, value } } = req;
+
+            let users;
+            if (filter && value) {
+                // Build a dynamic query using regex for case-insensitive search
+                const searchQuery = {};
+                searchQuery[filter] = { $regex: value, $options: "i" };
+
+                users = await User.find(searchQuery);
+            } else {
+                users = await User.find({});
+            }
+
+            return res.send(users);
+        } catch (err) {
+            console.error(err);
+            return res.status(500).send({ msg: "Error fetching users from database." });
         }
-        return res.send(users);
+    } else {
+        res.status(404).send({ msg: "You don't have the right cookie/You are not the Admin." });
     }
-    else{
-        res.status(404).send({msg:"You don't have the right cookie/You are not the Admin."})
-    }
+});
 
-
-})
 
 router.get("/api/users/:id", getParamsId, (req, res) => {
     const id = req.id;
@@ -35,7 +48,8 @@ router.get("/api/users/:id", getParamsId, (req, res) => {
 //POST req ->Creation
 
 
-router.post("/api/users", checkSchema(creatUserValidationSchema), (req, res) => {
+router.post("/api/users", checkSchema(creatUserValidationSchema), 
+    async (req, res) => { // async is used because await is used for .save().
 
     const result = validationResult(req);
     // console.log(result);
@@ -45,13 +59,18 @@ router.post("/api/users", checkSchema(creatUserValidationSchema), (req, res) => 
     }
 
     const body = matchedData(req);
-    const newUser = {
-        id: users[users.length - 1].id + 1,
-        ...body
+    //Create new user using mongoose schema
+    const newUser = new User(body);
+    try{
+         //Saving the new User
+        const savedUser = await newUser.save(); // await => used to wait for saving the new user data in DB,because .save() is async function 
+        return res.status(201).send(savedUser);
     }
-    users.push(newUser);
-    return res.status(201).send(newUser);
-})
+    catch(err){
+        console.log(err);
+        return res.status(400).send({msg:"User not saved."})
+    }
+});
 
 
 //PUT req -> UPDATE, Complete updation

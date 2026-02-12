@@ -8,7 +8,13 @@ import cookie from "cookie-parser"
 import session from "express-session"
 import { Strategy as localStrategy } from "passport-local"
 import passport from "passport";
-import { users } from "./utils/constants.mjs";
+import mongoose from "mongoose"
+import { User } from "./mongoose/schema/users.mjs";
+
+mongoose.connect('mongodb://192.168.0.105:27017/express')
+    .then(() => console.log("DB connected.."))
+    .catch((err) => console.log(`Error:${err}`));
+
 const app = express();
 
 const PORT = 3000;
@@ -36,26 +42,39 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 passport.use(new localStrategy(
-    {usernameField:"user_name",passwordField:"password"},
-    (user_name, password, done) => {    
-    const user = users.find((user) => user.user_name === user_name);
-    if(!user){
-        return done(null,false,{message:"Invalid username."});
-    }
-    if(user.password != password){
-        return done(null,false,{message:"Incorrect password."});
-    }
-    return done(null,user);
-}));
+    { usernameField: "user_name", passwordField: "password" },
+    async (user_name, password, done) => {
+        try {
+            const user = await User.findOne({ user_name: user_name });
+            if (!user) {
+                return done(null, false, { message: "Invalid username." });
+            }
+            if (user.password != password) {
+                return done(null, false, { message: "Incorrect password." });
+            }
+            return done(null, user);
+        }
+        catch (err) {
+            return done(err, false);
+        }
 
-passport.serializeUser((user,done)=>{
+    }));
 
-    done(null,user.id);
+passport.serializeUser((user, done) => {
+
+    done(null, user.id);
 });
 
-passport.deserializeUser((id,done)=>{
-    const user = users.find((u)=>u.id === id);
-    done(null, user || false);
+passport.deserializeUser(async(id, done) => {
+    try{
+    const user = await User.findById(id);
+    done(null,user)
+    }
+    catch(err){
+        console.log(err);
+        done(err, false);
+    }
+    
 });
 
 app.use(router);
@@ -84,18 +103,18 @@ app.get("/", (req, res) => {
     res.send({ msg: "root" });
 })
 
-app.post("/login", (req,res,next) =>{
-    passport.authenticate("local", (err,user,info) =>{
-        if(err)
+app.post("/login", (req, res, next) => {
+    passport.authenticate("local", (err, user, info) => {
+        if (err)
             return next(err);
-        if(!user){
-            return res.status(401).send({message: info?.message || "Login Failed." });
+        if (!user) {
+            return res.status(401).send({ message: info?.message || "Login Failed." });
         }
         req.login(user, (err) => {
-            if(err) return next(err);
-            return res.json({message : "Login Successful", user});
+            if (err) return next(err);
+            return res.json({ message: "Login Successful", user });
         });
-    })(req,res,next); //calling the callback function immediately once we have finished the definition.
+    })(req, res, next); //calling the callback function immediately once we have finished the definition.
 })
 
 
