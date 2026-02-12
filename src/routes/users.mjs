@@ -2,17 +2,9 @@ import { Router } from "express";
 import { getIndexById, getParamsId } from "../utils/middleWare.mjs"
 import { creatUserValidationSchema } from "../utils/validationSchemas.mjs"
 import { validationResult, matchedData, checkSchema } from "express-validator"
+import {users} from "../utils/constants.mjs"
+
 const router = Router();
-
-const users = [
-
-    { id: 1, user_name: "subash" },
-    { id: 2, user_name: "hello" },
-    { id: 3, user_name: "world" },
-    { id: 4, user_name: "Welcome" },
-    { id: 5, user_name: "DoIt" },
-    { id: 6, user_name: "super" }
-]
 
 router.get("/api/users", (req, res) => {
 

@@ -1,17 +1,8 @@
 import { Router } from "express";
 import {getParamsId} from "../utils/middleWare.mjs"
+import {products} from "../utils/constants.mjs"
 
 const router = Router();
-
-const products = [
-
-    {id:1, product_name:"iphone 16"},
-    {id:2,product_name:"iphone 17 max"},
-    {id:3,product_name:"Realme 11 pro"},
-    {id:4,product_name:"s25 ultra"},
-    {id:5,product_name:"Moto edge 60"},
-    {id:6,product_name:"supernova"}
-]
 
 router.get("/api/products",(req,res) =>{
     
