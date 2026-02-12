@@ -10,6 +10,7 @@ import { Strategy as localStrategy } from "passport-local"
 import passport from "passport";
 import mongoose from "mongoose"
 import { User } from "./mongoose/schema/users.mjs";
+import { comparePassword } from "./utils/helper.mjs";
 
 mongoose.connect('mongodb://192.168.0.105:27017/express')
     .then(() => console.log("DB connected.."))
@@ -40,6 +41,10 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+/*
+user_name:Ysubash
+password:1283456
+*/
 
 passport.use(new localStrategy(
     { usernameField: "user_name", passwordField: "password" },
@@ -49,7 +54,7 @@ passport.use(new localStrategy(
             if (!user) {
                 return done(null, false, { message: "Invalid username." });
             }
-            if (user.password != password) {
+            if (comparePassword(password,user.password)) {
                 return done(null, false, { message: "Incorrect password." });
             }
             return done(null, user);

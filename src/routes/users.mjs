@@ -4,6 +4,7 @@ import { creatUserValidationSchema } from "../utils/validationSchemas.mjs"
 import { validationResult, matchedData, checkSchema } from "express-validator"
 import {users} from "../utils/constants.mjs"
 import { User } from "../mongoose/schema/users.mjs";
+import { hashPassword } from "../utils/helper.mjs";
 
 const router = Router();
 
@@ -59,6 +60,8 @@ router.post("/api/users", checkSchema(creatUserValidationSchema),
     }
 
     const body = matchedData(req);
+    //Hasing the password...
+    body.password = hashPassword(body.password);
     //Create new user using mongoose schema
     const newUser = new User(body);
     try{
